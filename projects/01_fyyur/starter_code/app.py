@@ -12,6 +12,8 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from flask_migrate import Migrate
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -21,41 +23,80 @@ moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
-# TODO: connect to a local postgresql database
+# XTODO: connect to a local postgresql database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://postgres:1111@localhost:5432/fyyur_project'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+migrate = Migrate(app, db)
 
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
 
 class Venue(db.Model):
-    __tablename__ = 'Venue'
+  __tablename__ = 'venues'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String, nullable = False)
+  city = db.Column(db.String(120), nullable = False)
+  state = db.Column(db.String(120), nullable = False)
+  address = db.Column(db.String(120), nullable = False)
+  phone = db.Column(db.String(120), nullable = False)
+  image_link = db.Column(db.String(500))
+  facebook_link = db.Column(db.String(120))
+  web_site = db.Column(db.String(120))
+  seeking_talent_atrist = db.Column(db.Boolean, default=False)
+  seeking_talent_description = db.Column(db.String(500), nullable = False)
+  
+  shows = db.relationship('Show', backref='venue')
+  geners = db.relationship( 'Gener', secondary = 'venue_geners', backref = db.backref('venue', lazy=True))
+    # XTODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
-    __tablename__ = 'Artist'
+  __tablename__ = 'artists'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String, nullable = False)
+  city = db.Column(db.String(120), nullable = False)
+  state = db.Column(db.String(120), nullable = False)
+  phone = db.Column(db.String(120), nullable = False)
+  image_link = db.Column(db.String(500))
+  facebook_link = db.Column(db.String(120))
+  web_site = db.Column(db.String(120))
+  seeking_venue = db.Column(db.Boolean, default=False)
+  seeking_venue_description = db.Column(db.String(500))
+  
+  shows = db.relationship('Show', backref='artist')
+  genres = db.relationship("Gener", secondary='artist_geners', backref=db.backref("artist", lazy=True))  
+  # XTODO: implement any missing fields, as a database migration using Flask-Migrate
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+# XTODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+class Show(db.Model):
+  __tablename__ = 'shows'
+  
+  id = db.Column(db.Integer, primary_key=True)
+  data_and_time = db.Column(db.Integer(), nullable=False)
+  artist_id = db.Column(db.Integer, db.ForeignKey(Artist.id), nullable=False)
+  venue_id = db.Column(db.Integer, db.ForeignKey(Venue.id), nullable=False)
+  image_link = db.Column(db.String(500))
+    
+class Gener(db.Model):
+  __tablename__ = 'geners'
+  
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String, nullable=False)
+
+# inspiered from many to many relationship in: 
+# https://docs.sqlalchemy.org/en/13/orm/basic_relationships.html  
+venue_gener = db.Table( 'venue_geners',
+  db.Column('venue_id', db.Integer, db.ForeignKey(Venue.id), primary_key = True),
+  db.Column('gener_id', db.Integer, db.ForeignKey(Gener.id), primary_key = True)
+)
+
+artist_gener = db.Table( 'artist_geners',
+  db.Column('artist_id', db.Integer, db.ForeignKey(Artist.id), primary_key = True),
+  db.Column('gener_id', db.Integer, db.ForeignKey(Gener.id), primary_key = True)
+)
 
 #----------------------------------------------------------------------------#
 # Filters.

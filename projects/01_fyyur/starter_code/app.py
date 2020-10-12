@@ -13,6 +13,8 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
+from sqlalchemy import *
+
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -49,7 +51,7 @@ class Venue(db.Model):
   shows = db.relationship('Show', backref='venue')
   geners = db.relationship( 'Gener', secondary = 'venue_geners', backref = db.backref('venue', lazy=True))
   addresses = db.relationship('Address', backref='venue', lazy=True)
-  image_link = db.relationship("ImageLink", secondary='venue_image_links', backref=db.backref("artist", lazy=True))  
+  image_link = db.relationship("ImageLink", secondary='venue_image_links', backref=db.backref("venue", lazy=True))  
 
     # XTODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -81,9 +83,7 @@ class Show(db.Model):
   data_and_time = db.Column(db.String, nullable=False)
   artist_id = db.Column(db.Integer, db.ForeignKey(Artist.id), nullable=False)
   venue_id = db.Column(db.Integer, db.ForeignKey(Venue.id), nullable=False)
-  
-  image_link = db.relationship("ImageLink", secondary='artist_image_links', backref=db.backref("artist", lazy=True))  
-    
+      
 class Gener(db.Model):
   __tablename__ = 'geners'
   
@@ -157,27 +157,35 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  data=[]
+  venues = Venue.query.order_by(Venue.state.asc(), Venue.id.asc()).all()
+  city = ''
+  state = ''
+  
+  for venue in venues:
+    num_shows = len(venue.shows)
+    
+    if venue.city != city or venue.state != state:
+      city = venue.city
+      state = venue.state
+      
+      data.append({
+        "city": venue.city,
+        "state": venue.state,
+        "venues": [{
+          "id": venue.id,
+          "name": venue.name,
+          "num_upcoming_shows": num_shows
+        }]
+      })
+      
+    else:
+      data[-1]['venues'].append({
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": num_shows
+      })
+      
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])

@@ -59,7 +59,7 @@ def upgrade():
     )
     op.create_table('shows',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('data_and_time', sa.Integer(), nullable=False),
+    sa.Column('data_and_time', sa.String(), nullable=False),
     sa.Column('artist_id', sa.Integer(), nullable=False),
     sa.Column('venue_id', sa.Integer(), nullable=False),
     sa.Column('image_link', sa.String(length=500), nullable=True),

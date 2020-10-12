@@ -208,7 +208,7 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
+  # TODO (X): replace with real venue data from the venues table, using venue_id
   venue = Venue.query.get(venue_id)
   venue_shows = venue.shows
   venue_geners = venue.geners
@@ -289,24 +289,85 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  # TODO (x): insert form data as a new Venue record in the db, instead
+  # TODO (x): modify data to be the data object returned from db insertion
+  error = False
+  
+  try:
+    new_venue = Venue()
+    new_address = Address()
+    new_venue_gener = VenueGener()
+    new_image_link = ImageLink()
+    new_venue_image_link = VenueImageLink()
+    
+    address = request.form.get('address','')
+    image_link = request.form.get('image_link','')
+    geners = request.form.getlist('genres')
+    
+    # fix geners
+    for gener in geners:
+      gener_id = Gener.query.filter(Gener.name.ilike(gener)).first()
+      new_venue_gener.gener_id = gener_id
+      new_venue_gener.venue_id = new_venue.id
+    
+    new_image_link.image_link = image_link
+    new_venue_image_link.image_link_id = new_image_link.id
+    new_venue_image_link.venue_id = new_venue.id
+    
+    new_address.address = address
+    new_address.venue_id = new_venue.id
+    
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
+    new_venue.name = request.form.get('name','')
+    new_venue.city = request.form.get('city','')
+    new_venue.state = request.form.get('state','')
+    new_venue.phone = request.form.get('phone','')
+    new_venue.web_site = request.form.get ('website_link','')
+    new_venue.facebook_link = request.form.get ('facebook_link','')
+
+    if request.form.get('seek_talents','') == 'yes':
+      new_venue.seeking_talent_atrist = True
+      new_venue.seeking_talent_description = request.form.get('seek_description','')
+    else:
+      new_venue.seeking_talent_atrist = False 
+    
+    db.session.add(new_venue)
+    db.session.commit()
+    
+  except:
+    error = True
+    db.session.rollback()
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+  if error:
+  # TODO (x): on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+    flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+  else:
+  # on successful db insert, flash success
+    flash('Venue ' + request.form['name'] + ' was successfully listed!')
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
+  # TODO (x): Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-
+  try:
+    Venue.query.filter_by(id=venue_id).delete()
+    db.session.commit()
+  except:
+    db.session.rollback()
+    flash('There was an issue in deleting')
+  finally:
+    db.session.close()
+    flash('Venue was successfully deleted!')
+    # fix use this to implement button
+    # <button class="delete-button" data-id="{{ todo.id }}">&cross;</button>
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+  return render_template('pages/home.html')
 
 #  Artists
 #  ----------------------------------------------------------------

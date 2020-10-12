@@ -304,7 +304,7 @@ def create_venue_submission():
     image_link = request.form.get('image_link','')
     geners = request.form.getlist('genres')
     
-    # fix geners
+    
     for gener in geners:
       gener_id = Gener.query.filter(Gener.name.ilike(gener)).first()
       new_venue_gener.gener_id = gener_id
@@ -350,7 +350,7 @@ def create_venue_submission():
     flash('Venue ' + request.form['name'] + ' was successfully listed!')
   return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>', methods=['DELETE'])
+@app.route('/venues/<venue_id>/delete', methods=['GET'])
 def delete_venue(venue_id):
   # TODO (x): Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
@@ -365,8 +365,6 @@ def delete_venue(venue_id):
   finally:
     db.session.close()
     flash('Venue was successfully deleted!')
-    # fix use this to implement button
-    # <button class="delete-button" data-id="{{ todo.id }}">&cross;</button>
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
   return render_template('pages/home.html')
@@ -475,54 +473,195 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-  form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
-  # TODO: populate form with fields from artist with ID <artist_id>
+
+  artist = Artist.query.get(artist_id)
+  artist_geners = artist.geners
+  artist_image_link = artist.image_link
+  
+  geners = []
+  image_link = []
+  
+  for gener in artist_geners:
+    geners.append(gener.name)
+      
+  for image in artist_image_link:
+    image_link.append(image.image_link) 
+
+
+  form = ArtistForm(
+    name = artist.name,
+    city = artist.city,
+    state = artist.state,
+    phone = artist.phone,
+    facebook_link = artist.facebook_link,
+    website = artist.web_site,
+    seeking_venue = artist.seeking_venue,
+    seeking_description = artist.seeking_venue_description,
+    image_link = str(image_link)[2:-2],
+    genres = str(image_link)[2:-2]
+  )  
+  # TODO (x): populate form with fields from artist with ID <artist_id>
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-  # TODO: take values from the form submitted, and update existing
+  # TODO (x): take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
+  error = False
+  
+  try:
+    current_artist = Artist.query.get(artist_id)
+    
+    # new_image_link = request.form.get('image_link','')
+    # ImageLink.query.filter_by(image_link=current_artist.image_link).destroy()
+    # new_image_link = ImageLink()
+    # new_image_link.image_link = new_image_link
+    
+    # ArtistImageLink.query.filter_by(artist_id=artist_id).delete()
+    # new_artist_image_link = ArtistImageLink()
+    # new_artist_image_link.artist_id = artist_id
+    # new_artist_image_link.image_link_id = new_image_link.id
+    # new_geners = request.form.getlist('genres')
+    # if new_geners != []:
+    #   ArtistGener.query.filter(artist_id=artist_id).delete()
+    #   current_artist_gener = ArtistGener()
+    #   current_artist_gener.artist_id = artist_id
+    # else:
+    #   current_artist_gener = ArtistGener.query.filter_by(artist_id=artist_id).find()[0]
+    
+    # for gener in new_geners:
+    #   gener_found = Gener.query.filter(Gener.name.ilike(gener)).all()[0]
+    #   current_artist_gener.gener_id = gener_found.id
+    
+    current_artist.name = request.form.get('name','')
+    current_artist.city = request.form.get('city','')
+    current_artist.state = request.form.get('state','')
+    current_artist.phone = request.form.get('phone','')
+    current_artist.web_site = request.form.get ('website','')
+    current_artist.facebook_link = request.form.get ('facebook_link','')
 
+    if request.form.get('seek_venue','') == 'yes':
+      current_artist.seeking_venue = True
+      current_artist.seeking_venue_description = request.form.get('seek_description','')
+    else:
+      current_artist.seeking_venue = False 
+    
+    db.session.commit()
+    
+  except:
+    error = True
+    db.session.rollback()
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+  if error:
+  # TODO (x): on unsuccessful db insert, flash an error instead.
+  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
+  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+    flash('An error occurred. Artist ' + request.form['name'] + ' could not be edited.')
+  else:
+  # on successful db insert, flash success
+    flash('Artist ' + request.form['name'] + ' was successfully edited!')
   return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-  form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
-  # TODO: populate form with values from venue with ID <venue_id>
+  venue = Venue.query.get(venue_id)
+  venue_geners = venue.geners
+  venue_image_link = venue.image_link
+  venue_address = venue.addresses
+  
+  geners = []
+  image_link = []
+  addresses = []
+  
+  for gener in venue_geners:
+    geners.append(gener.name)
+      
+  for image in venue_image_link:
+    image_link.append(image.image_link) 
+    
+  for address in venue_address:
+    addresses.append(address.address) 
+
+
+  form = VenueForm(
+    name = venue.name,
+    city = venue.city,
+    state = venue.state,
+    phone = venue.phone,
+    facebook_link = venue.facebook_link,
+    website = venue.web_site,
+    seeking_venue = venue.seeking_talent_atrist,
+    seeking_description = venue.seeking_talent_description,
+    image_link = str(image_link)[2:-2],
+    genres = str(image_link)[2:-2],
+    address = str(addresses)[2:-2]
+  )  
+  # TODO (x): populate form with values from venue with ID <venue_id>
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
+  # TODO (x): take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
+  
+  error = False
+  
+  try:
+    current_venue = Venue.query.get(venue_id)
+    
+    # new_image_link = request.form.get('image_link','')
+    # ImageLink.query.filter_by(image_link=current_venue.image_link).destroy()
+    # new_image_link = ImageLink()
+    # new_image_link.image_link = new_image_link
+    
+    # VenueImageLink.query.filter_by(venue_id=venue_id).delete()
+    # new_venue_image_link = VenueImageLink()
+    # new_venue_image_link.venue_id = venue_id
+    # new_venue_image_link.image_link_id = new_image_link.id
+    # new_geners = request.form.getlist('genres')
+    # if new_geners != []:
+    #   VenueGener.query.filter(venue_id=venue_id).delete()
+    #   current_venue_gener = VenueGener()
+    #   current_venue_gener.venue_id = venue_id
+    # else:
+    #   current_venue_gener = VenueGener.query.filter_by(venue_id=venue_id).find()[0]
+    
+    # for gener in new_geners:
+    #   gener_found = Gener.query.filter(Gener.name.ilike(gener)).all()[0]
+    #   current_venue_gener.gener_id = gener_found.id
+    
+    current_venue.name = request.form.get('name','')
+    current_venue.city = request.form.get('city','')
+    current_venue.state = request.form.get('state','')
+    current_venue.phone = request.form.get('phone','')
+    current_venue.web_site = request.form.get ('website','')
+    current_venue.facebook_link = request.form.get ('facebook_link','')
+
+    if request.form.get('seek_talent','') == 'yes':
+      current_venue.seeking_talent_atrist = True
+      current_venue.seeking_talent_description = request.form.get('seek_description','')
+    else:
+      current_venue.seeking_venue = False 
+    
+    db.session.commit()
+    
+  except:
+    error = True
+    db.session.rollback()
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+  if error:
+  # TODO (x): on unsuccessful db insert, flash an error instead.
+  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
+  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+    flash('An error occurred. Artist ' + request.form['name'] + ' could not be edited.')
+  else:
+  # on successful db insert, flash success
+    flash('Artist ' + request.form['name'] + ' was successfully edited!')
+    
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
@@ -549,7 +688,7 @@ def create_artist_submission():
     image_link = request.form.get('image_link','')
     geners = request.form.getlist('genres')
     
-    # fix geners
+    
     for gener in geners:
       gener_id = Gener.query.filter(Gener.name.ilike(gener)).first()
       new_artist_gener.gener_id = gener_id

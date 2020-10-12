@@ -42,6 +42,10 @@
 		</p>
 		{% endif %}
 	</div>
+	<form action="/venues/{{ venue.id }}/delete" method="GET">
+		<button type="submit" class="btn btn-primary btn-lg">DELETE THIS VENUE</button>
+	</form>
+	<br>
 	<div class="col-sm-6">
 		<img src="{{ venue.image_link }}" alt="Venue Image" />
 	</div>

@@ -25,7 +25,7 @@ moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
-# XTODO: connect to a local postgresql database
+# TODO (X) : connect to a local postgresql database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://postgres:1111@localhost:5432/fyyur_project'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 migrate = Migrate(app, db)
@@ -53,7 +53,7 @@ class Venue(db.Model):
   addresses = db.relationship('Address', backref='venue', lazy=True)
   image_link = db.relationship("ImageLink", secondary='venue_image_links', backref=db.backref("venue", lazy=True))  
 
-    # XTODO: implement any missing fields, as a database migration using Flask-Migrate
+    # TODO (X) : implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
   __tablename__ = 'artists'
@@ -72,7 +72,7 @@ class Artist(db.Model):
   genres = db.relationship("Gener", secondary='artist_geners', backref=db.backref("artist", lazy=True))  
   image_link = db.relationship("ImageLink", secondary='artist_image_links', backref=db.backref("artist", lazy=True))  
 
-  # XTODO: implement any missing fields, as a database migration using Flask-Migrate
+  # TODO (X) : implement any missing fields, as a database migration using Flask-Migrate
 
 # XTODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
@@ -155,7 +155,7 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
+  # TODO (X) : replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
   data=[]
   venues = Venue.query.order_by(Venue.state.asc(), Venue.id.asc()).all()
@@ -190,18 +190,20 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+  # TODO (X): implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"  
+  
+  # inspierd from: 
+  search_term = request.form.get('search_term', '')
+  search = "%{}%".format(search_term)
+  venues = Venue.query.filter(Venue.name.ilike(search)).all()
+
   response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+    "count": len(venues),
+    "data": venues
   }
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):

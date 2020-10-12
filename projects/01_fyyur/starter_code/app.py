@@ -194,7 +194,7 @@ def search_venues():
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"  
   
-  # inspierd from: 
+  # inspierd from: https://stackoverflow.com/questions/3325467/sqlalchemy-equivalent-to-sql-like-statement 
   search_term = request.form.get('search_term', '')
   search = "%{}%".format(search_term)
   venues = Venue.query.filter(Venue.name.ilike(search)).all()

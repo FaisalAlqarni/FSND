@@ -1,0 +1,19 @@
+insert into geners(id, name) values (1, 'JAZZ'), (2, 'REGGAE'), (3, 'SWING'), (4, 'CLASSICAL'), (5, 'FOLK'), (6, 'ROCK N ROLL'), (7, 'R&B'), (8, 'HIP-HOP');
+
+insert into image_links(id, image_link) values (1, 'https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60'),  (2, 'https://images.unsplash.com/photo-1497032205916-ac775f0649ae?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=750&q=80'), (3, 'https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80'), (4, 'https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80'), (5, 'https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80'), (6, 'https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80');
+
+insert into venues(id, name, city, state, phone, facebook_link, web_site, seeking_talent_atrist, seeking_talent_description) values (1, 'THE MUSICAL HOP', 'San Francisco', 'CA', '23-123-1234', 'https://www.facebook.com/TheMusicalHop', 'https://www.themusicalhop.com', True, 'We are on the lookout for a local artist to play every two weeks. Please call us.'), (2, 'THE DUELING PIANOS BAR', 'New York', 'NY', '914-003-1132', 'https://www.facebook.com/theduelingpianos', 'https://www.theduelingpianos.com', False, ''), (3, 'PARK SQUARE LIVE MUSIC & COFFEE', 'San Francisco', 'CA', '415-000-1234', 'https://www.facebook.com/ParkSquareLiveMusicAndCoffee', 'https://www.parksquarelivemusicandcoffee.com/', False, '');
+
+insert into addresses(id, address, venue_id) values (1, '1015 Folsom Street', 1), (2, '335 Delancey Street', 2), (3, '34 Whiskey Moore Ave', 3);
+
+insert into artists(id, name, city, state, phone, facebook_link, web_site, seeking_venue, seeking_venue_description) values (4, 'GUNS N PETALS', 'San Francisco', 'CA', '326-123-5000', 'https://www.facebook.com/GunsNPetals','https://www.gunsnpetalsband.com/', True, 'Looking for shows to perform at in the San Francisco Bay Area!'), (5, 'MATT QUEVEDO', 'New York', 'NY', '432-325-5432', 'https://www.facebook.com/mattquevedo923251523', 'No Website', False, ''), (6, 'THE WILD SAX BAND', 'San Francisco', 'CA', '415-000-1234', 'No Facebook Link', 'No Website', False, '');
+
+insert into venue_geners(venue_id, gener_id) values (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (2, 4), (2, 7), (2, 8), (3, 6), (3, 1), (3, 4), (3, 5);
+
+insert into artist_geners(artist_id, gener_id) values (4, 6), (5, 1), (6, 1), (6, 4);
+
+insert into venue_image_links(venue_id, image_link_id) values (1, 1), (2, 3), (3, 3);
+
+insert into artist_image_links(artist_id, image_link_id) values (4, 4), (5, 5), (6, 6);
+
+insert into shows(data_and_time, artist_id, venue_id) values ('Tuesday May, 21, 2019 at 9:30 PM', 4, 1), ('Saturday Jun, 15, 2019 at 11:00 PM', 5, 3),  ('Sunday Apr, 1, 2035 at 8:00 PM', 6, 3), ('Sunday Apr, 8, 2035 at 8:00 PM', 6, 3), ('Sunday Apr, 15, 2035 at 8:00 PM', 6, 3);

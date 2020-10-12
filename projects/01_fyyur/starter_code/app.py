@@ -69,7 +69,7 @@ class Artist(db.Model):
   seeking_venue_description = db.Column(db.String(500), default='')
   
   shows = db.relationship('Show', backref='artist')
-  genres = db.relationship("Gener", secondary='artist_geners', backref=db.backref("artist", lazy=True))  
+  geners = db.relationship("Gener", secondary='artist_geners', backref=db.backref("artist", lazy=True))  
   image_link = db.relationship("ImageLink", secondary='artist_image_links', backref=db.backref("artist", lazy=True))  
 
   # TODO (X) : implement any missing fields, as a database migration using Flask-Migrate
@@ -407,6 +407,69 @@ def search_artists():
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
+  
+  artist = Artist.query.get(artist_id)
+  artist_shows = artist.shows
+  artist_geners = artist.geners
+  artist_image_link = artist.image_link
+  
+  geners = []
+  image_link = []
+  past_shows = []
+  upcoming_shows = []
+  
+  current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+  for gener in artist_geners:
+    geners.append(gener.name)
+      
+  for image in artist_image_link:
+    image_link.append(image.image_link) 
+    
+  for show in artist_shows:
+    time = format_datetime(show.data_and_time, format='medium')
+    artist = Artist.query.get(show.artist_id)
+    atrints_images = artist.image_link
+    artist_image_link = []
+    
+    for image in atrints_images:
+      artist_image_link.append(image.image_link) 
+    
+    image = str(artist_image_link)[2:-2]
+    
+    if(time >= current_time):
+      past_shows.append({
+        "artist_id": artist.id,
+        "artist_name": artist.name,
+        "artist_image_link": image,
+        "start_time": show.data_and_time
+      })
+      
+    else:
+      upcoming_shows.append({
+        "artist_id": artist.id,
+        "artist_name": artist.name,
+        "artist_image_link": image,
+        "start_time": show.data_and_time
+      })
+
+  data={
+    "id": artist.id,
+    "name": artist.name,
+    "genres": geners,
+    "city": artist.city,
+    "state": artist.state,
+    "phone": artist.phone,
+    "website": artist.web_site,
+    "facebook_link": artist.facebook_link,
+    "seeking_venue": artist.seeking_venue,
+    "seeking_description": artist.seeking_venue_description,
+    "image_link": str(image_link)[2:-2],
+    "past_shows": past_shows,
+    "upcoming_shows": upcoming_shows,
+    "past_shows_count": len(past_shows),
+    "upcoming_shows_count": len(upcoming_shows),
+  }
+  
   data1={
     "id": 4,
     "name": "Guns N Petals",

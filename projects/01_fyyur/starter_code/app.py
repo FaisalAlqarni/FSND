@@ -39,16 +39,18 @@ class Venue(db.Model):
   name = db.Column(db.String, nullable = False)
   city = db.Column(db.String(120), nullable = False)
   state = db.Column(db.String(120), nullable = False)
-  address = db.Column(db.String(120), nullable = False)
   phone = db.Column(db.String(120), nullable = False)
   image_link = db.Column(db.String(500))
   facebook_link = db.Column(db.String(120))
   web_site = db.Column(db.String(120))
   seeking_talent_atrist = db.Column(db.Boolean, default=False)
-  seeking_talent_description = db.Column(db.String(500), nullable = False)
+  seeking_talent_description = db.Column(db.String(500), default='')
   
   shows = db.relationship('Show', backref='venue')
   geners = db.relationship( 'Gener', secondary = 'venue_geners', backref = db.backref('venue', lazy=True))
+  addresses = db.relationship('Address', backref='venue', lazy=True)
+  image_link = db.relationship("ImageLink", secondary='venue_image_links', backref=db.backref("artist", lazy=True))  
+
     # XTODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
@@ -59,14 +61,15 @@ class Artist(db.Model):
   city = db.Column(db.String(120), nullable = False)
   state = db.Column(db.String(120), nullable = False)
   phone = db.Column(db.String(120), nullable = False)
-  image_link = db.Column(db.String(500))
   facebook_link = db.Column(db.String(120))
   web_site = db.Column(db.String(120))
   seeking_venue = db.Column(db.Boolean, default=False)
-  seeking_venue_description = db.Column(db.String(500))
+  seeking_venue_description = db.Column(db.String(500), default='')
   
   shows = db.relationship('Show', backref='artist')
   genres = db.relationship("Gener", secondary='artist_geners', backref=db.backref("artist", lazy=True))  
+  image_link = db.relationship("ImageLink", secondary='artist_image_links', backref=db.backref("artist", lazy=True))  
+
   # XTODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # XTODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
@@ -75,10 +78,11 @@ class Show(db.Model):
   __tablename__ = 'shows'
   
   id = db.Column(db.Integer, primary_key=True)
-  data_and_time = db.Column(db.Integer(), nullable=False)
+  data_and_time = db.Column(db.String, nullable=False)
   artist_id = db.Column(db.Integer, db.ForeignKey(Artist.id), nullable=False)
   venue_id = db.Column(db.Integer, db.ForeignKey(Venue.id), nullable=False)
-  image_link = db.Column(db.String(500))
+  
+  image_link = db.relationship("ImageLink", secondary='artist_image_links', backref=db.backref("artist", lazy=True))  
     
 class Gener(db.Model):
   __tablename__ = 'geners'
@@ -86,18 +90,43 @@ class Gener(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String, nullable=False)
 
-# inspiered from many to many relationship in: 
-# https://docs.sqlalchemy.org/en/13/orm/basic_relationships.html  
-venue_gener = db.Table( 'venue_geners',
-  db.Column('venue_id', db.Integer, db.ForeignKey(Venue.id), primary_key = True),
-  db.Column('gener_id', db.Integer, db.ForeignKey(Gener.id), primary_key = True)
-)
+class VenueGener(db.Model):
+  __tablename__ = 'venue_geners'
+  
+  venue_id = db.Column('venue_id', db.Integer, db.ForeignKey(Venue.id), primary_key = True)
+  gener_id = db.Column('gener_id', db.Integer, db.ForeignKey(Gener.id), primary_key = True)
 
-artist_gener = db.Table( 'artist_geners',
-  db.Column('artist_id', db.Integer, db.ForeignKey(Artist.id), primary_key = True),
-  db.Column('gener_id', db.Integer, db.ForeignKey(Gener.id), primary_key = True)
-)
+class ArtistGener(db.Model):
+  __tablename__ = 'artist_geners'
+                           
+  artist_id = db.Column('artist_id', db.Integer, db.ForeignKey(Artist.id), primary_key = True)
+  gener_id = db.Column('gener_id', db.Integer, db.ForeignKey(Gener.id), primary_key = True)
 
+class Address(db.Model):
+  __tablename__ = 'addresses'
+
+  id = db.Column(db.Integer, primary_key=True)
+  address = db.Column(db.String(120), nullable=False, primary_key=True)
+  venue_id = db.Column(db.Integer, db.ForeignKey(Venue.id), nullable=False)
+  
+class ImageLink(db.Model):
+    __tablename__ = 'image_links'
+    id = db.Column(db.Integer, primary_key=True)
+    image_link = db.Column(db.String(500))
+    
+class VenueImageLink(db.Model):
+  __tablename__ = 'venue_image_links'
+  
+  venue_id = db.Column('venue_id', db.Integer, db.ForeignKey(Venue.id), primary_key = True)
+  image_link_id = db.Column('image_link_id', db.Integer, db.ForeignKey(ImageLink.id), primary_key = True)
+
+class ArtistImageLink(db.Model):
+  __tablename__ = 'artist_image_links'
+                           
+  artist_id = db.Column('artist_id', db.Integer, db.ForeignKey(Artist.id), primary_key = True)
+  image_link_id = db.Column('image_link_id', db.Integer, db.ForeignKey(ImageLink.id), primary_key = True)
+
+  
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#

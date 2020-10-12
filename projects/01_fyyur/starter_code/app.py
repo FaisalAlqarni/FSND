@@ -354,6 +354,8 @@ def create_venue_submission():
 def delete_venue(venue_id):
   # TODO (x): Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+  
+  # the code below inspired by udacity lessons
   try:
     Venue.query.filter_by(id=venue_id).delete()
     db.session.commit()
@@ -387,18 +389,19 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+  # TODO (x): implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
+  search_term = request.form.get('search_term', '')
+  search = "%{}%".format(search_term)
+  artists = Artist.query.filter(Artist.name.ilike(search)).all()
+
   response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+    "count": len(artists),
+    "data": artists
   }
-  return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+
+  return render_template('pages/search_artists.html', results=response, search_term=search_term)
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):

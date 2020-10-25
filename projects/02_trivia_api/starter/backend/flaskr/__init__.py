@@ -17,22 +17,42 @@ def create_app(test_config=None):
   def index():
     return "Hello !!"
   '''
-  @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+  @TODOx: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
+  # inspired from Udacity classroom videos
   CORS(app)
   cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
-
   '''
-  @TODO: Use the after_request decorator to set Access-Control-Allow
+  @TODOx: Use the after_request decorator to set Access-Control-Allow
   '''
-
+  # inspired from Udacity classroom videos
+  @app.after_request
+  def after_request(response):
+      response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
+      response.headers.add('Access-Control-Allow-Methods', 'GET,PATCH,POST,DELETE,OPTIONS')
+      return response
+    
   '''
-  @TODO: 
+  @TODOx: 
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
+  @app.route('/categories')
+  def get_categories():
+    categories = Category.query.all()
 
+    if len(categories) == 0:
+      abort(404)
+
+    formated_categories = []
+    for category in categories:
+      formated_categories.append(category.format())
+
+    return jsonify({
+      'success': True,
+      'categories': formated_categories
+    })
 
   '''
   @TODO: 

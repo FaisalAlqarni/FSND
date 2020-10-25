@@ -38,7 +38,7 @@ def create_app(test_config=None):
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
-  @app.route('/categories')
+  @app.route('/categories', methods=['GET'])
   def get_categories():
     categories = Category.query.order_by(Category.type).all()
 
@@ -55,7 +55,7 @@ def create_app(test_config=None):
     }), 200
 
   '''
-  @TODO: 
+  @TODOx: 
   Create an endpoint to handle GET requests for questions, 
   including pagination (every 10 questions). 
   This endpoint should return a list of questions, 
@@ -77,7 +77,7 @@ def create_app(test_config=None):
     
     return paginated_questions
 
-  @app.route('/questions')
+  @app.route('/questions', methods=['GET'])
   def get_questions():
     questions = Question.query.order_by(Question.id).all()
     categories = Category.query.order_by(Category.type).all()
@@ -95,15 +95,37 @@ def create_app(test_config=None):
       'questions': paginated_questions, 
       'number of total questions': len(questions),
       'categories': formated_categories,
+      'current_category': None,
     }), 200
 
   '''
-  @TODO: 
+  @TODOx: 
   Create an endpoint to DELETE question using a question ID. 
 
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
+  @app.route('/questions/<int:question_id>', methods=['DELETE'])
+  def delete_question(question_id):
+    try:
+      question = Question.query.filter(Question.id == question_id).one_or_none()
+
+      if question is None:
+        abort(404)
+
+      question.delete()
+      questions = Question.query.order_by(Question.id).all()
+      paginated_questions = questions_pagination(request, questions)
+
+      return jsonify({
+        'success': True,
+        'deleted': question_id,
+        'total': len(questions),
+        'questions': paginated_questions
+      }), 200
+      
+    except:
+      abort(422)
 
   '''
   @TODO: 

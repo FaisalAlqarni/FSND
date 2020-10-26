@@ -41,18 +41,20 @@ def create_app(test_config=None):
   @app.route('/categories', methods=['GET'])
   def get_categories():
     categories = Category.query.order_by(Category.type).all()
-
     if len(categories) == 0:
       abort(404)
 
-    formated_categories = []
-    for category in categories:
-      formated_categories.append(category.format())
+    try:
+      formated_categories = []
+      for category in categories:
+        formated_categories.append(category.format())
 
-    return jsonify({
-      'success': True,
-      'categories': formated_categories
-    }), 200
+      return jsonify({
+        'success': True,
+        'categories': formated_categories
+      }), 200
+    except:
+      abort(422)
 
   '''
   @TODOx: 
@@ -84,19 +86,22 @@ def create_app(test_config=None):
 
     if len(questions) == 0:
       abort(404)
-
-    paginated_questions = questions_pagination(request, questions)
-    formated_categories = []
-    for category in categories:
-      formated_categories.append(category.format())
-      
-    return jsonify({
-      'success': True,
-      'questions': paginated_questions, 
-      'number of total questions': len(questions),
-      'categories': formated_categories,
-      'current_category': None,
-    }), 200
+    
+    try:
+      paginated_questions = questions_pagination(request, questions)
+      formated_categories = []
+      for category in categories:
+        formated_categories.append(category.format())
+        
+      return jsonify({
+        'success': True,
+        'questions': paginated_questions, 
+        'number of total questions': len(questions),
+        'categories': formated_categories,
+        'current_category': None,
+      }), 200
+    except:
+      abort(422)
 
   '''
   @TODOx: 
@@ -107,12 +112,12 @@ def create_app(test_config=None):
   '''
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_question(question_id):
+    question = Question.query.filter(Question.id == question_id).one_or_none()
+
+    if question is None:
+      abort(404)
+      
     try:
-      question = Question.query.filter(Question.id == question_id).one_or_none()
-
-      if question is None:
-        abort(404)
-
       question.delete()
       questions = Question.query.all()
 
@@ -153,15 +158,21 @@ def create_app(test_config=None):
         answers_collection = Question.query.order_by(Question.id).filter(Question.answer.ilike('%{}%'.format(searchTerm)))
         paginated_answers = questions_pagination(request, answers_collection)
 
+        if (len(questions_collection.all()) == 0) and (len(answers_collection.all()) == 0):
+          abort(404)
+          
         return jsonify({
           'success': True,
           'by_questions': paginated_questions,
           'total_questions': len(questions_collection.all()),
           'by_answers': paginated_answers,
           'total_answers': len(answers_collection.all()),
-        })
+        }), 200
         
       else:
+        if (question is None) or (answer is None) or (difficulty is None) or (category is None):
+          abort(400)
+          
         created_question = Question(
           question=question,
           answer=answer,
@@ -190,41 +201,66 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
-  @app.route('/questions', methods=['POST'])
+  
+  # i created a serchterm in teh previous endpoint because i am not sure if you want to extend the leangth of this route
+  @app.route('/questions/search', methods=['POST'])
   def search_question():
     body = request.get_json()
     # the attributes are from FormView.js
     searchTerm = body.get('searchTerm', None)
 
-    try:
-      if searchTerm is None:
-        abort(400)
-        
-      questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm)))
-      paginated_questions = questions_pagination(request, questions_collection)
-      
-      answers_collection = Question.query.order_by(Question.id).filter(Question.answer.ilike('%{}%'.format(searchTerm)))
-      paginated_answers = questions_pagination(request, answers_collection)
+    if searchTerm is None:
+      abort(400)
+    questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm)))
+    answers_collection = Question.query.order_by(Question.id).filter(Question.answer.ilike('%{}%'.format(searchTerm)))
 
+    if (len(questions_collection.all()) == 0) and (len(answers_collection.all()) == 0):
+      abort(404)
+      
+    try:  
+      paginated_questions = questions_pagination(request, questions_collection)
+      paginated_answers = questions_pagination(request, answers_collection)
+          
       return jsonify({
         'success': True,
         'by_questions': paginated_questions,
         'total_questions': len(questions_collection.all()),
         'by_answers': paginated_answers,
         'total_answers': len(answers_collection.all()),
-      })      
+      }), 200  
     except:
       abort(422)
 
   '''
-  @TODO: 
+  @TODOx: 
   Create a GET endpoint to get questions based on category. 
 
   TEST: In the "List" tab / main screen, clicking on one of the 
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
+  @app.route('/category/<int:category_id>/questions')
+  def get_questions_on_category(category_id):
+    questions = Question.query.join(Category, Question.category == Category.id).filter(Category.id == category_id).order_by(Question.id).all()
+    
+    if len(questions) == 0:
+      abort(404)
+      
+    try:
+      formated_questions = []
+      for question in questions:
+        formated_questions.append(question.format())
 
+
+      return jsonify({
+        'success': True,
+        'category': category_id,
+        'questions': formated_questions,
+        'total': len(questions),
+      }), 200
+    
+    except:
+      abort(422)
 
   '''
   @TODO: 
@@ -237,13 +273,65 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  @app.route('/quizzes', methods=['POST'])
+  def get_quiz_with_random_questions():
+    body = request.get_json()
+    # from QuizView.js
+    previous_questions = body.get('previous_questions')
+    quiz_category = body.get('quiz_category')
 
+    if quiz_category is None or previous_questions is None:
+      abort(400)
+
+    try:        
+      if quiz_category['id'] == 0:
+        questions = Question.query.all()
+      else:
+        questions = Question.query.join(Category, Question.category == Category.id).filter(Category.id == quiz_category['id']).all()
+
+      quiz_questions = [question.format() for question in questions if question.id not in previous_questions]
+
+      if len(quiz_questions) == 0:
+          next_question = None
+      else:
+          next_question = random.choice(quiz_questions)
+
+      return jsonify({
+          'success': True,
+          'question': next_question
+      }), 200
+
+    except:
+      abort(422)
   '''
-  @TODO: 
+  @TODOx: 
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
-  
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      "success": False, 
+      "error": 400,
+      "message": "bad request"
+      }), 400
+
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      "success": False, 
+      "error": 404,
+      "message": "resource not found"
+      }), 404
+
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      "success": False, 
+      "error": 422,
+      "message": "unprocessable"
+      }), 422
+
   return app
 
     

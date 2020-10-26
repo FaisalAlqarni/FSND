@@ -45,35 +45,36 @@ Pay special attention to what data the frontend is expecting from each API respo
 ## API Reference
 ### Before we start
 we need first to set up the environment and dependencies.
+
 1- setting up the Database:
 * go to backend folder
 * open the terminal there
-* run this command to import the db to our machine 'psql -U your_db_username -d existed_db_name -f trivia.psql'
+* run this command to import the db to our machine `psql -U your_db_username -d existed_db_name -f trivia.psql`
 
 2- setting up the backend:
 * go to backend folder
 * open the terminal there
-* run this command 'pip install -r requirements.txt' to install depentncies
+* run this command `pip install -r requirements.txt` to install depentncies
 * run this commands to run the backend server
-' export FLASK_APP=flaskr
-  export FLASK_ENV=development
-  flask run'
+    `export FLASK_APP=flaskr
+    export FLASK_ENV=development
+    flask run`
 
 3- setting up the frontend:
 * go to frontend folder
 * open the terminal there
-* run this command 'npm install' to install depentncies
-* run this command to run the frontend server 'npm start'
+* run this command `npm install` to install depentncies
+* run this command to run the frontend server `npm start`
 
 ### Testing
 In order to run tests navigate to the backend folder and run the following commands:
 
-'dropdb trivia_test
+`dropdb trivia_test
 createdb trivia_test
 psql trivia_test < trivia.psql
-python test_flaskr.py'
-The first time you run the tests, omit the dropdb command.
+python test_flaskr.py`
 
+The first time you run the tests, omit the dropdb command.
 All tests are kept in that file and should be maintained as updates are made to app functionality.
 
 ### Basics
@@ -98,12 +99,11 @@ and there are three error handelrs:-
 
 ### Endpoints
 
-#### GET /categories
+#### GET `/categories`
+* This endpoint is to list categories
+* CURL: `curl http://127.0.0.1:5000/categories`
+* Result:
 
-This endpoint is to list categories
-
-CURL: `curl http://127.0.0.1:5000/categories`
-Result:
         {
             "categories": {
                 "1": "Science", 
@@ -117,16 +117,14 @@ Result:
         }
 
 
-#### GET /questions
+#### GET `/questions`
 
-This endpoint is to list questions in pages, each page contain 10 questions.
+* This endpoint is to list questions in pages, each page contain 10 questions.
 it return also a list of categories and number of questions
-
-Params:
-* page=int: to specify the page you want to go to. e.g. `curl http://127.0.0.1:5000/questions?page=23`
-
-CURL: `curl http://127.0.0.1:5000/questions`
-Result:
+* Params:
+    * page=int: to specify the page you want to go to. e.g. `curl http://127.0.0.1:5000/questions?page=23`
+* CURL: `curl http://127.0.0.1:5000/questions`
+* Result:
 
         {
             "categories": {
@@ -213,120 +211,125 @@ Result:
             "total_questions": 25
         }
 
-#### DELETE /questions/\<int:question_id\>
+#### DELETE `/questions/\<int:question_id\>`
 
-This endpoint is to delete a question by its ID.
+* This endpoint is to delete a question by its ID.
+* Params:
+    * int:question_id: to specify the question id you want to delete. e.g. `curl http://127.0.0.1:5000/questions/98546496`
+* CURL: `curl http://127.0.0.1:5000/questions/25`
+* Result:
 
-Params:
-* int:question_id: to specify the question id you want to delete. e.g. `curl http://127.0.0.1:5000/questions/98546496`
-
-CURL: `curl http://127.0.0.1:5000/questions/25`
-Result:
         {
             "deleted": 25,
             "success": true,
             "total": 24
         }
-
+        
 #### POST /questions
 
-This endpoint have two functions, create a new question, or search for a question.
+* This endpoint have two functions, create a new question, or search for a question.
+* <strong>Case Search</strong>
 
-<strong>Case Search</strong>
-Params:
-* SearchTerm : pass the search term using JSON to search. e,g. 
-        {   
-            "searchTerm": "to"
-        }
- CURL: `curl http://127.0.0.1:5000/questions -X POST -H "Content-Type: application/json" -d '{"searchTerm": "to"}'`
- Result:
-        {
-            "questions": [
-                {
-                    "answer": "Apollo 13",
-                    "category": 5,
-                    "difficulty": 4,
-                    "id": 2,
-                    "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
-                },
-                {
-                    "answer": "Tom Cruise",
-                    "category": 5,
-                    "difficulty": 4,
-                    "id": 4,
-                    "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
-                },
-                {
-                    "answer": "Maya Angelou",
-                    "category": 4,
-                    "difficulty": 2,
-                    "id": 5,
-                    "question": "Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?"
-                },
-                {
-                    "answer": "Edward Scissorhands",
-                    "category": 5,
-                    "difficulty": 3,
-                    "id": 6,
-                    "question": "What was the title of the 1990 fantasy directed by Tim Burton about a young man with multi-bladed appendages?"
-                },
-                {
-                    "answer": "Brazil",
-                    "category": 6,
-                    "difficulty": 3,
-                    "id": 10,
-                    "question": "Which is the only team to play in every soccer World Cup tournament?"
-                },
-                {
-                    "answer": "Escher",
-                    "category": 2,
-                    "difficulty": 1,
-                    "id": 16,
-                    "question": "Which Dutch graphic artist–initials M C was a creator of optical illusions?"
-                }
-            ],
-            "success": true,
-            "total_questions": 6
-        }
-
-<strong>Case Create</strong>
-Params:
-* question : the question you want to ask.
-* answer : the answer of the question.
-* category : the category id.
-* difficulty : the difficulty in int.
-all the params are passed on JSON like:
-        {
-                "question": "what is the capital of saudi arabia?",
-                "answer": "Riyadh",
-                "category": 3,
-                "difficulty": 1
-        }
+    * Params:
+        * SearchTerm : pass the search term using JSON to search.
+        like:
         
- CURL: `curl http://127.0.0.1:5000/questions -X POST -H "Content-Type: application/json" -d '{
+                {   
+                    "searchTerm": "to"
+                }
+   
+    * CURL: `curl http://127.0.0.1:5000/questions -X POST -H "Content-Type: application/json" -d '{"searchTerm": "to"}'`
+    * Result:
+    
+            {
+                "questions": [
+                    {
+                        "answer": "Apollo 13",
+                        "category": 5,
+                        "difficulty": 4,
+                        "id": 2,
+                        "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+                    },
+                    {
+                        "answer": "Tom Cruise",
+                        "category": 5,
+                        "difficulty": 4,
+                        "id": 4,
+                        "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+                    },
+                    {
+                        "answer": "Maya Angelou",
+                        "category": 4,
+                        "difficulty": 2,
+                        "id": 5,
+                        "question": "Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?"
+                    },
+                    {
+                        "answer": "Edward Scissorhands",
+                        "category": 5,
+                        "difficulty": 3,
+                        "id": 6,
+                        "question": "What was the title of the 1990 fantasy directed by Tim Burton about a young man with multi-bladed appendages?"
+                    },
+                    {
+                        "answer": "Brazil",
+                        "category": 6,
+                        "difficulty": 3,
+                        "id": 10,
+                        "question": "Which is the only team to play in every soccer World Cup tournament?"
+                    },
+                    {
+                        "answer": "Escher",
+                        "category": 2,
+                        "difficulty": 1,
+                        "id": 16,
+                        "question": "Which Dutch graphic artist–initials M C was a creator of optical illusions?"
+                    }
+                ],
+                "success": true,
+                "total_questions": 6
+            }
+
+* <strong>Case Create</strong>
+
+    * Params:
+        * question : the question you want to ask.
+        * answer : the answer of the question.
+        * category : the category id.
+        * difficulty : the difficulty in int.
+        
+        all the params are passed on JSON like:
+        
+                {
+                        "question": "what is the capital of saudi arabia?",
+                        "answer": "Riyadh",
+                        "category": 3,
+                        "difficulty": 1
+                }
+        
+    * CURL: `curl http://127.0.0.1:5000/questions -X POST -H "Content-Type: application/json" -d '{
                 "question": 'what is the capital of saudi arabia?',
                 "answer": 'Riyadh',
                 "category": 3,
                 "difficulty": 1
                 }'`
- Result:
-        {
-            "created": 36,
-            "success": true,
-            "total": 25
-        }
+    * Result: r
+    
+            {
+                "created": 36,
+                "success": true,
+                "total": 25
+            }
         
 <strong>Note: if searchTerm is present then IT WILL OVERWRITE and you can't create a question</strong>
 
 
-#### GET /categories/\<int:category_id\>/questions
-This endpoint is to get the quiestion of the category given the category id in pagination.
-
-Params:
-category_id: the id of teh category
-
-CURL: `curl http://127.0.0.1:5000/categories/3/questions`
-Result:
+#### GET `/categories/\<int:category_id\>/questions`
+* This endpoint is to get the quiestion of the category given the category id in pagination.
+* Params:
+    * category_id: the id of the category
+* CURL: `curl http://127.0.0.1:5000/categories/3/questions`
+* Result:
 
         {
             "questions": [
@@ -364,19 +367,21 @@ Result:
         }
 
 #### POST /quizzes
-this endpoint will allow the user to play the quiz game, the requst params are category and previous questions.
+* This endpoint will allow the user to play the quiz game, the requst params are category and previous questions.
+* Params:
+    * previous_questions: ids of the previous questions
+    * quiz_category: the category type and id for the questions
+    like:
 
-Params:
-previous_questions: ids of the previous questions
-quiz_category: the category type and id for the questions
         {
-                "previous_questions": [13, 14],
-                "quiz_category": {"type": "Geography", "id": "3"}
+            "previous_questions": [13, 14],
+            "quiz_category": {"type": "Geography", "id": "3"}
         }
         
-CURL: `curl http://127.0.0.1:5000/quizzes -X POST -H "Content-Type: application/json" -d '{"previous_questions": [13, 14],
+* CURL: `curl http://127.0.0.1:5000/quizzes -X POST -H "Content-Type: application/json" -d '{"previous_questions": [13, 14],
                                             "quiz_category": {"type": "Geography", "id": "3"}}'`
-Result:
+* Result:
+
         {
             "question": {
                 "answer": "Riyadh", 

@@ -114,21 +114,19 @@ def create_app(test_config=None):
         abort(404)
 
       question.delete()
-      questions = Question.query.order_by(Question.id).all()
-      paginated_questions = questions_pagination(request, questions)
+      questions = Question.query.all()
 
       return jsonify({
         'success': True,
         'deleted': question_id,
         'total': len(questions),
-        'questions': paginated_questions
       }), 200
       
     except:
       abort(422)
 
   '''
-  @TODO: 
+  @TODOx: 
   Create an endpoint to POST a new question, 
   which will require the question and answer text, 
   category, and difficulty score.
@@ -137,6 +135,50 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
+  @app.route('/questions', methods=['POST'])
+  def create_question():
+    body = request.get_json()
+    # the attributes are from FormView.js
+    question = body.get('question', None)
+    answer = body.get('answer', None)
+    difficulty = body.get('difficulty', None)
+    category = body.get('category', None)
+    searchTerm = body.get('searchTerm', None)
+
+    try:
+      if searchTerm:
+        questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm)))
+        paginated_questions = questions_pagination(request, questions_collection)
+        
+        answers_collection = Question.query.order_by(Question.id).filter(Question.answer.ilike('%{}%'.format(searchTerm)))
+        paginated_answers = questions_pagination(request, answers_collection)
+
+        return jsonify({
+          'success': True,
+          'by_questions': paginated_questions,
+          'total_questions': len(questions_collection.all()),
+          'by_answers': paginated_answers,
+          'total_answers': len(answers_collection.all()),
+        })
+        
+      else:
+        created_question = Question(
+          question=question,
+          answer=answer,
+          difficulty=difficulty,
+          category=category)
+
+        created_question.insert()
+        questions = Question.query.all()
+
+        return jsonify({
+          'success': True,
+          'created': created_question.id,
+          'total': len(questions),
+        }), 200
+      
+    except:
+      abort(422)
 
   '''
   @TODO: 
@@ -148,6 +190,31 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
+  @app.route('/questions', methods=['POST'])
+  def search_question():
+    body = request.get_json()
+    # the attributes are from FormView.js
+    searchTerm = body.get('searchTerm', None)
+
+    try:
+      if searchTerm is None:
+        abort(400)
+        
+      questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm)))
+      paginated_questions = questions_pagination(request, questions_collection)
+      
+      answers_collection = Question.query.order_by(Question.id).filter(Question.answer.ilike('%{}%'.format(searchTerm)))
+      paginated_answers = questions_pagination(request, answers_collection)
+
+      return jsonify({
+        'success': True,
+        'by_questions': paginated_questions,
+        'total_questions': len(questions_collection.all()),
+        'by_answers': paginated_answers,
+        'total_answers': len(answers_collection.all()),
+      })      
+    except:
+      abort(422)
 
   '''
   @TODO: 

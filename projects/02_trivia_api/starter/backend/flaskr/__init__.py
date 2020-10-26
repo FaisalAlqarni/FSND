@@ -84,6 +84,9 @@ def create_app(test_config=None):
     
     try:
       paginated_questions = questions_pagination(request, questions)
+      if (len(paginated_questions) == 0):
+        abort(404)
+
       categories = {category.id: category.type for category in categories}
 
       return jsonify({
@@ -147,7 +150,7 @@ def create_app(test_config=None):
         questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm))).all()
         paginated_questions = questions_pagination(request, questions_collection)
         
-        if len(questions_collection) == 0:
+        if (len(questions_collection) == 0) or (len(paginated_questions) == 0):
           abort(404)
           
         return jsonify({
@@ -189,7 +192,6 @@ def create_app(test_config=None):
   Try using the word "title" to start. 
   '''
   
-  # i created a serch in the previous endpoint because i am not sure if you want to extend the leangth of this route
   @app.route('/questions', methods=['POST'])
   def search_questions():
     body = request.get_json()
@@ -205,7 +207,9 @@ def create_app(test_config=None):
       
     try:  
       paginated_questions = questions_pagination(request, questions)
-          
+      if len(paginated_questions) == 0:
+        abort(404) 
+         
       return jsonify({
         'success': True,
         'questions': paginated_questions,
@@ -230,7 +234,9 @@ def create_app(test_config=None):
             
     try:
       paginated_questions = questions_pagination(request, questions)
-
+      if len(paginated_questions) == 0:
+        abort(404) 
+        
       return jsonify({
         'success': True,
         'questions': paginated_questions,
@@ -259,33 +265,31 @@ def create_app(test_config=None):
     quiz_category = body.get('quiz_category')
 
     if quiz_category is None or previous_questions is None:
-      abort(400)
-
-    try:        
-      if quiz_category['id'] == 0:
-        questions = Question.query.all()
-      else:
-        questions = Question.query.join(Category, Question.category == Category.id).filter(Category.id == quiz_category['id']).all()
-
-      quiz_questions = [question.format() for question in questions if question.id not in previous_questions]
-
-      if len(quiz_questions) == 0:
-        next_question = None
-      else:
-        next_question = random.choice(quiz_questions)
-
-      return jsonify({
-        'success': True,
-        'question': next_question
-      }), 200
-
-    except:
       abort(422)
+    
+    if quiz_category['id'] == 0:
+      questions = Question.query.all()
+    else:
+      questions = Question.query.join(Category, Question.category == Category.id).filter(Category.id == quiz_category['id']).all()
+
+    quiz_questions = [question.format() for question in questions if question.id not in previous_questions]
+
+    if len(quiz_questions) == 0:
+      next_question = None
+    else:
+      next_question = random.choice(quiz_questions)
+
+    return jsonify({
+      'success': True,
+      'question': next_question
+    }), 200
+
   '''
   @TODOx: 
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
+  # inspered from classroom videos
   @app.errorhandler(400)
   def bad_request(error):
     return jsonify({

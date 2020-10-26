@@ -13,9 +13,6 @@ def create_app(test_config=None):
   app = Flask(__name__)
   setup_db(app)
   
-  @app.route('/')
-  def index():
-    return "Hello !!"
   '''
   @TODOx: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
@@ -45,13 +42,11 @@ def create_app(test_config=None):
       abort(404)
 
     try:
-      formated_categories = []
-      for category in categories:
-        formated_categories.append(category.format())
+      categories = {category.id: category.type for category in categories}
 
       return jsonify({
         'success': True,
-        'categories': formated_categories
+        'categories': categories
       }), 200
     except:
       abort(422)
@@ -89,16 +84,13 @@ def create_app(test_config=None):
     
     try:
       paginated_questions = questions_pagination(request, questions)
-      formated_categories = []
-      for category in categories:
-        formated_categories.append(category.format())
-        
+      categories = {category.id: category.type for category in categories}
+
       return jsonify({
         'success': True,
         'questions': paginated_questions, 
-        'number of total questions': len(questions),
-        'categories': formated_categories,
-        'current_category': None,
+        'total_questions': len(questions),
+        'categories': categories,
       }), 200
     except:
       abort(422)
@@ -152,21 +144,16 @@ def create_app(test_config=None):
 
     try:
       if searchTerm:
-        questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm)))
+        questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm))).all()
         paginated_questions = questions_pagination(request, questions_collection)
         
-        answers_collection = Question.query.order_by(Question.id).filter(Question.answer.ilike('%{}%'.format(searchTerm)))
-        paginated_answers = questions_pagination(request, answers_collection)
-
-        if (len(questions_collection.all()) == 0) and (len(answers_collection.all()) == 0):
+        if len(questions_collection) == 0:
           abort(404)
           
         return jsonify({
           'success': True,
-          'by_questions': paginated_questions,
-          'total_questions': len(questions_collection.all()),
-          'by_answers': paginated_answers,
-          'total_answers': len(answers_collection.all()),
+          'questions': paginated_questions,
+          'total_questions': len(questions_collection),
         }), 200
         
       else:
@@ -202,31 +189,27 @@ def create_app(test_config=None):
   Try using the word "title" to start. 
   '''
   
-  # i created a serchterm in teh previous endpoint because i am not sure if you want to extend the leangth of this route
-  @app.route('/questions/search', methods=['POST'])
-  def search_question():
+  # i created a serch in the previous endpoint because i am not sure if you want to extend the leangth of this route
+  @app.route('/questions', methods=['POST'])
+  def search_questions():
     body = request.get_json()
     # the attributes are from FormView.js
     searchTerm = body.get('searchTerm', None)
 
     if searchTerm is None:
       abort(400)
-    questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm)))
-    answers_collection = Question.query.order_by(Question.id).filter(Question.answer.ilike('%{}%'.format(searchTerm)))
-
-    if (len(questions_collection.all()) == 0) and (len(answers_collection.all()) == 0):
+      
+    questions = Question.query.filter(Question.question.ilike('%{}%'.format(searchTerm))).all()
+    if len(questions) == 0:
       abort(404)
       
     try:  
-      paginated_questions = questions_pagination(request, questions_collection)
-      paginated_answers = questions_pagination(request, answers_collection)
+      paginated_questions = questions_pagination(request, questions)
           
       return jsonify({
         'success': True,
-        'by_questions': paginated_questions,
-        'total_questions': len(questions_collection.all()),
-        'by_answers': paginated_answers,
-        'total_answers': len(answers_collection.all()),
+        'questions': paginated_questions,
+        'total_questions': len(questions),
       }), 200  
     except:
       abort(422)
@@ -239,31 +222,26 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
-  @app.route('/category/<int:category_id>/questions')
+  @app.route('/categories/<int:category_id>/questions')
   def get_questions_on_category(category_id):
     questions = Question.query.join(Category, Question.category == Category.id).filter(Category.id == category_id).order_by(Question.id).all()
-    
     if len(questions) == 0:
       abort(404)
-      
+            
     try:
-      formated_questions = []
-      for question in questions:
-        formated_questions.append(question.format())
-
+      paginated_questions = questions_pagination(request, questions)
 
       return jsonify({
         'success': True,
-        'category': category_id,
-        'questions': formated_questions,
-        'total': len(questions),
+        'questions': paginated_questions,
+        'total_questions': len(questions),
       }), 200
     
     except:
       abort(422)
 
   '''
-  @TODO: 
+  @TODOx: 
   Create a POST endpoint to get questions to play the quiz. 
   This endpoint should take category and previous question parameters 
   and return a random questions within the given category, 
@@ -292,13 +270,13 @@ def create_app(test_config=None):
       quiz_questions = [question.format() for question in questions if question.id not in previous_questions]
 
       if len(quiz_questions) == 0:
-          next_question = None
+        next_question = None
       else:
-          next_question = random.choice(quiz_questions)
+        next_question = random.choice(quiz_questions)
 
       return jsonify({
-          'success': True,
-          'question': next_question
+        'success': True,
+        'question': next_question
       }), 200
 
     except:

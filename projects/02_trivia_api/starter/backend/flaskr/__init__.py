@@ -8,50 +8,54 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+
 def create_app(test_config=None):
-  # create and configure the app
-  app = Flask(__name__)
-  setup_db(app)
-  
-  '''
+    # create and configure the app
+    app = Flask(__name__)
+    setup_db(app)
+
+    '''
   @TODOx: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
-  # inspired from Udacity classroom videos
-  CORS(app)
-  cors = CORS(app, resources={r"/*": {"origins": "*"}})
+    # inspired from Udacity classroom videos
+    CORS(app)
+    cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
-  '''
+    '''
   @TODOx: Use the after_request decorator to set Access-Control-Allow
   '''
-  # inspired from Udacity classroom videos
-  @app.after_request
-  def after_request(response):
-      response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
-      response.headers.add('Access-Control-Allow-Methods', 'GET,PATCH,POST,DELETE,OPTIONS')
-      return response
-    
-  '''
+    # inspired from Udacity classroom videos
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Headers',
+                             'Content-Type,Authorization,true')
+        response.headers.add('Access-Control-Allow-Methods',
+                             'GET,PATCH,POST,DELETE,OPTIONS')
+        return response
+
+    '''
   @TODOx: 
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
-  @app.route('/categories', methods=['GET'])
-  def get_categories():
-    categories = Category.query.order_by(Category.type).all()
-    if len(categories) == 0:
-      abort(404)
+    @app.route('/categories', methods=['GET'])
+    def get_categories():
+        categories = Category.query.order_by(Category.type).all()
+        if len(categories) == 0:
+            abort(404)
 
-    try:
-      categories = {category.id: category.type for category in categories}
+        try:
+            categories = {
+                category.id: category.type for category in categories}
 
-      return jsonify({
-        'success': True,
-        'categories': categories
-      }), 200
-    except:
-      abort(422)
+            return jsonify({
+                'success': True,
+                'categories': categories
+            }), 200
+        except:
+            abort(422)
 
-  '''
+    '''
   @TODOx: 
   Create an endpoint to handle GET requests for questions, 
   including pagination (every 10 questions). 
@@ -63,69 +67,67 @@ def create_app(test_config=None):
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions. 
   '''
-  def questions_pagination(request, collection):
-    page = request.args.get('page', 1, type=int)
-    
-    start =  (page - 1) * QUESTIONS_PER_PAGE
-    end = start + QUESTIONS_PER_PAGE
+    def questions_pagination(request, collection):
+        page = request.args.get('page', 1, type=int)
 
-    questions = [question.format() for question in collection]
-    paginated_questions = questions[start:end]
-    
-    return paginated_questions
+        start = (page - 1) * QUESTIONS_PER_PAGE
+        end = start + QUESTIONS_PER_PAGE
 
-  @app.route('/questions', methods=['GET'])
-  def get_questions():
-    questions = Question.query.order_by(Question.id).all()
-    categories = Category.query.order_by(Category.type).all()
+        questions = [question.format() for question in collection]
+        paginated_questions = questions[start:end]
 
-    if len(questions) == 0:
-      abort(404)
-    
-    try:
-      paginated_questions = questions_pagination(request, questions)
-      if (len(paginated_questions) == 0):
-        abort(404)
+        return paginated_questions
 
-      categories = {category.id: category.type for category in categories}
+    @app.route('/questions', methods=['GET'])
+    def get_questions():
+        questions = Question.query.order_by(Question.id).all()
+        categories = Category.query.order_by(Category.type).all()
 
-      return jsonify({
-        'success': True,
-        'questions': paginated_questions, 
-        'total_questions': len(questions),
-        'categories': categories,
-      }), 200
-    except:
-      abort(422)
+        if len(questions) == 0:
+            abort(404)
 
-  '''
+        try:
+            paginated_questions = questions_pagination(request, questions)
+            if (len(paginated_questions) == 0):
+                abort(422)
+
+            categories = {
+                category.id: category.type for category in categories}
+
+            return jsonify({
+                'success': True,
+                'questions': paginated_questions,
+                'total_questions': len(questions),
+                'categories': categories,
+            }), 200
+        except:
+            abort(422)
+
+    '''
   @TODOx: 
   Create an endpoint to DELETE question using a question ID. 
 
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
-  @app.route('/questions/<int:question_id>', methods=['DELETE'])
-  def delete_question(question_id):
-    question = Question.query.filter(Question.id == question_id).one_or_none()
+    @app.route('/questions/<int:question_id>', methods=['DELETE'])
+    def delete_question(question_id):
+        question = Question.query.filter(
+            Question.id == question_id).one_or_none()
 
-    if question is None:
-      abort(404)
-      
-    try:
-      question.delete()
-      questions = Question.query.all()
+        if question is None:
+            abort(404)
 
-      return jsonify({
-        'success': True,
-        'deleted': question_id,
-        'total': len(questions),
-      }), 200
-      
-    except:
-      abort(422)
+        question.delete()
+        questions = Question.query.all()
 
-  '''
+        return jsonify({
+            'success': True,
+            'deleted': question_id,
+            'total': len(questions),
+        }), 200
+
+    '''
   @TODOx: 
   Create an endpoint to POST a new question, 
   which will require the question and answer text, 
@@ -135,53 +137,51 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
-  @app.route('/questions', methods=['POST'])
-  def create_question():
-    body = request.get_json()
-    # the attributes are from FormView.js
-    question = body.get('question', None)
-    answer = body.get('answer', None)
-    difficulty = body.get('difficulty', None)
-    category = body.get('category', None)
-    searchTerm = body.get('searchTerm', None)
+    @app.route('/questions', methods=['POST'])
+    def create_question():
+        body = request.get_json()
+        # the attributes are from FormView.js
+        question = body.get('question', None)
+        answer = body.get('answer', None)
+        difficulty = body.get('difficulty', None)
+        category = body.get('category', None)
+        searchTerm = body.get('searchTerm', None)
 
-    try:
-      if searchTerm:
-        questions_collection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(searchTerm))).all()
-        paginated_questions = questions_pagination(request, questions_collection)
-        
-        if (len(questions_collection) == 0) or (len(paginated_questions) == 0):
-          abort(404)
-          
-        return jsonify({
-          'success': True,
-          'questions': paginated_questions,
-          'total_questions': len(questions_collection),
-        }), 200
-        
-      else:
-        if (question is None) or (answer is None) or (difficulty is None) or (category is None):
-          abort(400)
-          
-        created_question = Question(
-          question=question,
-          answer=answer,
-          difficulty=difficulty,
-          category=category)
+        if searchTerm:
+            questions_collection = Question.query.order_by(Question.id).filter(
+                Question.question.ilike('%{}%'.format(searchTerm))).all()
+            paginated_questions = questions_pagination(
+                request, questions_collection)
 
-        created_question.insert()
-        questions = Question.query.all()
+            if (len(questions_collection) == 0) or (len(paginated_questions) == 0):
+                abort(404)
 
-        return jsonify({
-          'success': True,
-          'created': created_question.id,
-          'total': len(questions),
-        }), 200
-      
-    except:
-      abort(422)
+            return jsonify({
+                'success': True,
+                'questions': paginated_questions,
+                'total_questions': len(questions_collection),
+            }), 200
 
-  '''
+        else:
+            if (question is None) or (answer is None) or (difficulty is None) or (category is None):
+                abort(400)
+
+            created_question = Question(
+                question=question,
+                answer=answer,
+                difficulty=difficulty,
+                category=category)
+
+            created_question.insert()
+            questions = Question.query.all()
+
+            return jsonify({
+                'success': True,
+                'created': created_question.id,
+                'total': len(questions),
+            }), 200
+
+    '''
   @TODOx: 
   Create a POST endpoint to get questions based on a search term. 
   It should return any questions for whom the search term 
@@ -191,34 +191,33 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
-  
-  @app.route('/questions', methods=['POST'])
-  def search_questions():
-    body = request.get_json()
-    # the attributes are from FormView.js
-    searchTerm = body.get('searchTerm', None)
 
-    if searchTerm is None:
-      abort(400)
-      
-    questions = Question.query.filter(Question.question.ilike('%{}%'.format(searchTerm))).all()
-    if len(questions) == 0:
-      abort(404)
-      
-    try:  
-      paginated_questions = questions_pagination(request, questions)
-      if len(paginated_questions) == 0:
-        abort(404) 
-         
-      return jsonify({
-        'success': True,
-        'questions': paginated_questions,
-        'total_questions': len(questions),
-      }), 200  
-    except:
-      abort(422)
+    @app.route('/questions', methods=['POST'])
+    def search_questions():
+        body = request.get_json()
+        # the attributes are from FormView.js
+        searchTerm = body.get('searchTerm', None)
 
-  '''
+        if searchTerm is None:
+            abort(400)
+
+        questions = Question.query.filter(
+            Question.question.ilike('%{}%'.format(searchTerm))).all()
+        if len(questions) == 0:
+            abort(404)
+
+        try:
+            paginated_questions = questions_pagination(request, questions)
+
+            return jsonify({
+                'success': True,
+                'questions': paginated_questions,
+                'total_questions': len(questions),
+            }), 200
+        except:
+            abort(422)
+
+    '''
   @TODOx: 
   Create a GET endpoint to get questions based on category. 
 
@@ -226,27 +225,24 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
-  @app.route('/categories/<int:category_id>/questions')
-  def get_questions_on_category(category_id):
-    questions = Question.query.join(Category, Question.category == Category.id).filter(Category.id == category_id).order_by(Question.id).all()
-    if len(questions) == 0:
-      abort(404)
-            
-    try:
-      paginated_questions = questions_pagination(request, questions)
-      if len(paginated_questions) == 0:
-        abort(404) 
-        
-      return jsonify({
-        'success': True,
-        'questions': paginated_questions,
-        'total_questions': len(questions),
-      }), 200
-    
-    except:
-      abort(422)
+    @app.route('/categories/<int:category_id>/questions')
+    def get_questions_on_category(category_id):
+        questions = Question.query.join(Category, Question.category == Category.id).filter(
+            Category.id == category_id).order_by(Question.id).all()
+        if len(questions) == 0:
+            abort(404)
 
-  '''
+        paginated_questions = questions_pagination(request, questions)
+        if len(paginated_questions) == 0:
+            abort(404)
+
+        return jsonify({
+            'success': True,
+            'questions': paginated_questions,
+            'total_questions': len(questions),
+        }), 200
+
+    '''
   @TODOx: 
   Create a POST endpoint to get questions to play the quiz. 
   This endpoint should take category and previous question parameters 
@@ -257,63 +253,63 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
-  @app.route('/quizzes', methods=['POST'])
-  def get_quiz_with_random_questions():
-    body = request.get_json()
-    # from QuizView.js
-    previous_questions = body.get('previous_questions')
-    quiz_category = body.get('quiz_category')
+    @app.route('/quizzes', methods=['POST'])
+    def get_quiz_with_random_questions():
+        body = request.get_json()
+        # from QuizView.js
+        previous_questions = body.get('previous_questions')
+        quiz_category = body.get('quiz_category')
 
-    if quiz_category is None or previous_questions is None:
-      abort(422)
-    
-    if quiz_category['id'] == 0:
-      questions = Question.query.all()
-    else:
-      questions = Question.query.join(Category, Question.category == Category.id).filter(Category.id == quiz_category['id']).all()
+        if quiz_category is None or previous_questions is None:
+            abort(422)
 
-    quiz_questions = [question.format() for question in questions if question.id not in previous_questions]
+        if quiz_category['id'] == 0:
+            questions = Question.query.all()
+        else:
+            questions = Question.query.join(Category, Question.category == Category.id).filter(
+                Category.id == quiz_category['id']).all()
 
-    if len(quiz_questions) == 0:
-      next_question = None
-    else:
-      next_question = random.choice(quiz_questions)
+        quiz_questions = [question.format(
+        ) for question in questions if question.id not in previous_questions]
 
-    return jsonify({
-      'success': True,
-      'question': next_question
-    }), 200
+        if len(quiz_questions) == 0:
+            next_question = None
+        else:
+            next_question = random.choice(quiz_questions)
 
-  '''
+        return jsonify({
+            'success': True,
+            'question': next_question
+        }), 200
+
+    '''
   @TODOx: 
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
-  # inspered from classroom videos
-  @app.errorhandler(400)
-  def bad_request(error):
-    return jsonify({
-      "success": False, 
-      "error": 400,
-      "message": "bad request"
-      }), 400
+    # inspered from classroom videos
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            "success": False,
+            "error": 400,
+            "message": "bad request"
+        }), 400
 
-  @app.errorhandler(404)
-  def not_found(error):
-    return jsonify({
-      "success": False, 
-      "error": 404,
-      "message": "resource not found"
-      }), 404
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            "success": False,
+            "error": 404,
+            "message": "resource not found"
+        }), 404
 
-  @app.errorhandler(422)
-  def unprocessable(error):
-    return jsonify({
-      "success": False, 
-      "error": 422,
-      "message": "unprocessable"
-      }), 422
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            "success": False,
+            "error": 422,
+            "message": "unprocessable"
+        }), 422
 
-  return app
-
-    
+    return app

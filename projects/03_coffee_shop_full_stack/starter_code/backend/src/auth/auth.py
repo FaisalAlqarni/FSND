@@ -7,7 +7,7 @@ from urllib.request import urlopen
 # added my cridentials
 AUTH0_DOMAIN = 'faisal-alqarni-misk.us.auth0.com'
 ALGORITHMS = ['RS256']
-API_AUDIENCE = 'drink'
+API_AUDIENCE = 'coffee'
 
 ## AuthError Exception
 '''
